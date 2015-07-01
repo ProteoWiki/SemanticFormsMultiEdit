@@ -29,7 +29,6 @@ $GLOBALS['wgAutoloadClasses']['SFMEParserFunctions'] = __DIR__ . '/includes/SFME
 
 $GLOBALS['wgMessagesDirs']['SemanticFormsMultiEdit'] = __DIR__ . '/i18n';
 $GLOBALS['wgExtensionMessagesFiles']['SemanticFormsMultiEdit'] = __DIR__ . '/languages/SFME_Messages.php';
-$GLOBALS['wgExtensionMessagesFiles']['SemanticFormsMultiEditAlias'] = __DIR__ . '/languages/SFME_Aliases.php';
 $GLOBALS['wgExtensionMessagesFiles']['SemanticFormsMultiEditMagic'] = __DIR__ . '/languages/SFME_Magic.php';
 
 
