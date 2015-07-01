@@ -4,51 +4,80 @@
  * @author Stephan Gambke
  */
 
-jQuery( function( $ ) {
+/*global confirm */
 
-	$('.multiedit-trigger').click(function(){
+( function ( $, mw ) {
 
-		if ( mw.config.get( 'wgUserName' ) == null ) {
-			if ( confirm( sfgAnonEditWarning ) ) {
-				handleMultiEdit( this );
-			}
-		} else {
-			handleMultiEdit( this );
+	'use strict';
+
+	var autoEditHandler = function handleAutoEdit(){
+
+		if ( mw.config.get( 'wgUserName' ) === null &&
+			! confirm( mw.msg( 'sf_multiedit_anoneditwarning' ) ) ) {
+
+			return;
 		}
 
-		return false;
-	});
-
-	function handleMultiEdit( trigger ){
-		var jtrigger = jQuery( trigger );
+		var jtrigger = jQuery( this );
 		var jmultiedit = jtrigger.closest( '.multiedit' );
-		var jresult = jmultiedit.find('.multiedit-result');
+		var jresult = jmultiedit.find( '.multiedit-result' );
 
 		var reload = jtrigger.hasClass( 'reload' );
 
-		var data = new Array();
-		data.push( jmultiedit.find('form.multiedit-data').serialize() );
+		jtrigger.attr( 'class', 'multiedit-trigger multiedit-trigger-wait' );
+		jresult.attr( 'class', 'multiedit-result multiedit-result-wait' );
 
-		jtrigger.attr('class', 'multiedit-trigger multiedit-trigger-wait');
-		jresult.attr('class', 'multiedit-result multiedit-result-wait');
+		jresult.text( mw.msg( 'sf-multiedit-wait' ) );
 
-		jresult[0].innerHTML="Wait..."; // TODO: replace by localized message
 
-		sajax_request_type = 'POST';
-		sajax_do_call( 'SFMultieditAPI::handleMultiEdit', data, function( ajaxHeader ){
-			jresult.empty().append( ajaxHeader.responseText );
+		// data array to be sent to the server
+		var data = {
+			action: 'sfmultiedit',
+			format: 'json'
+		};
 
-			if ( ajaxHeader.status == 200 ) {
+		// add form values to the data
+		data.query =  jmultiedit.find( 'form.multiedit-data' ).serialize();
 
-				if ( reload ) window.location.reload();
+		$.ajax( {
 
-				jresult.removeClass('multiedit-result-wait').addClass('multiedit-result-ok');
-				jtrigger.removeClass('multiedit-trigger-wait').addClass('multiedit-trigger-ok');
-			} else {
-				jresult.removeClass('multiedit-result-wait').addClass('multiedit-result-error');
-				jtrigger.removeClass('multiedit-trigger-wait').addClass('multiedit-trigger-error');
-			}
+			type:     'POST', // request type ( GET or POST )
+			url:      mw.util.wikiScript( 'api' ), // URL to which the request is sent
+			data:     data, // data to be sent to the server
+			dataType: 'json', // type of data expected back from the server
+			success:  function ( result ){
+				jresult.empty().append( result.responseText );
+
+				if ( result.status === 200 ) {
+
+					if ( reload ) {
+						window.location.reload();
+					}
+
+					jresult.removeClass( 'multiedit-result-wait' ).addClass( 'multiedit-result-ok' );
+					jtrigger.removeClass( 'multiedit-trigger-wait' ).addClass( 'multiedit-trigger-ok' );
+				} else {
+					jresult.removeClass( 'multiedit-result-wait' ).addClass( 'multiedit-result-error' );
+					jtrigger.removeClass( 'multiedit-trigger-wait' ).addClass( 'multiedit-trigger-error' );
+				}
+			}, // function to be called if the request succeeds
+			error:  function ( jqXHR, textStatus, errorThrown ) {
+				var result = jQuery.parseJSON(jqXHR.responseText);
+				var text = result.responseText;
+
+				for ( var i = 0; i < result.errors.length; i++ ) {
+					text += ' ' + result.errors[i].message;
+				}
+
+				jresult.empty().append( text );
+				jresult.removeClass( 'multiedit-result-wait' ).addClass( 'multiedit-result-error' );
+				jtrigger.removeClass( 'multiedit-trigger-wait' ).addClass( 'multiedit-trigger-error' );
+			} // function to be called if the request fails
 		} );
-	}
+	};
 
-})
+	jQuery( document ).ready( function ( $ ) {
+		$( '.multiedit-trigger' ).click( autoEditHandler );
+	} );
+
+}( jQuery, mediaWiki ) );
