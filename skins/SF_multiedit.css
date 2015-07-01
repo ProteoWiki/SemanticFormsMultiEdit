@@ -1,0 +1,48 @@
+/* 
+*/
+
+.multiedit {
+	display: inline;
+}
+
+.multiedit-trigger {
+	cursor: pointer;
+}
+
+.multiedit-trigger-wait {
+	margin-right: 1em;
+	cursor: pointer;
+}
+
+.multiedit-trigger-error {
+	display: none;
+}
+
+.multiedit-trigger-ok {
+	display: none;
+}
+
+.multiedit-result {
+    
+}
+
+.multiedit-result > p:first-child {
+	display:inline;
+}
+
+.multiedit-result-wait {
+    color: #555;
+	cursor: progress;
+}
+
+.multiedit-result-error {
+    color: #a00;
+}
+
+.multiedit-result-ok {
+    color: #0a0;
+}
+
+.multiedit-data {
+	display: none;
+}

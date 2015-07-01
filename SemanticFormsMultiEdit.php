@@ -39,12 +39,12 @@ if ( defined( 'MW_SUPPORTS_RESOURCE_MODULES' ) ) {
 		'remoteExtPath' => 'SemanticFormsMultiEdit'
 	);
 	$GLOBALS['wgResourceModules'] += array(
-		'ext.semanticforms.autoedit' => $sfgResourceTemplate + array(
-			'scripts' => 'libs/SF_autoedit.js',
-			'styles' => 'skins/SF_autoedit.css',
+		'ext.semanticforms.multiedit' => $sfgResourceTemplate + array(
+			'scripts' => 'libs/SF_multiedit.js',
+			'styles' => 'skins/SF_multiedit.css',
 			'messages' => array(
-				'sf-autoedit-wait',
-				'sf_autoedit_anoneditwarning',
+				'sf-multiedit-wait',
+				'sf_multiedit_anoneditwarning',
 			),
 		)
 	);
