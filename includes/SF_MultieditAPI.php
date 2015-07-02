@@ -146,6 +146,67 @@ class SFMultieditAPI extends ApiBase {
 			Parser::OT_WIKI
 		);
 
+
+		$overwrite = 1; // Overwrites by default
+
+		// if overwrite
+		if ( array_key_exists( 'overwrite', $this->mOptions ) ) {
+			$overwrite = $this->mOptions['overwrite'];
+			unset( $this->mOptions['overwrite'] );
+		}
+
+		// Iterates considering end
+		$digits = 0;
+		$start = 0;
+		$end = 0;
+
+		if ( array_key_exists( 'end', $this->mOptions ) ) {
+			$end = $this->mOptions['end'];
+			unset( $this->mOptions['end'] );
+		}
+		if ( array_key_exists( 'start', $this->mOptions ) ) {
+			$end = $this->mOptions['start'];
+			unset( $this->mOptions['start'] );
+		}
+
+		if ( array_key_exists( 'start', $this->mOptions ) ) {
+			$end = $this->mOptions['start'];
+			unset( $this->mOptions['start'] );
+		}
+
+		if ( array_key_exists( 'digits', $this->mOptions ) ) {
+			$end = $this->mOptions['digits'];
+			unset( $this->mOptions['digits'] );
+		}
+		
+		// TODO: Check whether this could be better
+		if ( ! is_numeric( $end ) || ! is_numeric( $start ) ) {
+			//Change return -> No numer
+			return 'multiedit-noformfound';
+		}
+
+		// We force digits
+		if ( !is_numeric($digits) ) { $digits = 0; }
+		
+		
+		if ( $end<0 || $start<0 ) {
+			//Change return -> Avoid too high or too low values
+			return 'multiedit-noformfound';
+		}
+		
+		global $wgSFMEMaxPages; // We get max pagews
+		if ( ($end-$start) > $wgSFMEMaxPages ) {
+			//Restrict too many pages
+			return 'multiedit-noformfound';
+		}
+		
+		// check base name
+		$checkbase = "";
+		if ( array_key_exists( 'checkabse', $this->mOptions ) ) {
+			$checkbase = $this->mOptions['checkbase'];
+			unset( $this->mOptions['checkbase'] );
+		}
+
 		// MW uses the parameter 'title' instead of 'target' when submitting
 		// data for formedit action => use that
 		if ( !array_key_exists( 'target', $this->mOptions ) && array_key_exists( 'title', $this->mOptions ) ) {
@@ -222,7 +283,48 @@ class SFMultieditAPI extends ApiBase {
 				$origin = $this->mOptions['origin'];
 			}
 			
-			$this->mailList($this->mOptions['mail'], $list_pages, $origin);
+			$this->mailList( $this->mOptions['mail'], $list_pages, $origin );
+		}
+
+		// We put base from target 
+		$base = $this->mOptions['target'];
+
+		// Optional stuff
+		if ( !empty( $checkbase ) ) {
+	
+			$matchbase = 0;
+			$patternbase = "/".$checkbase."/";
+			$matchbase = preg_match( $patternbase , $base );
+
+			if ($matchbase == 0) {
+				echo "Incorrect base name for samples. Contact webmaster.";
+				exit;
+			}
+
+		}
+
+
+		// Let's define array of pages
+		$list_pages = array();
+
+		//Iteration
+		$iter = $start; //Start point
+		while ( ( $iter < $end+1 ) ) {
+
+			$iterend = $this->digitsround( $iter, $digits );
+			$pagename = $base.$iterend;
+			$pagetarget = Title::newFromText( str_replace(' ', '_', $pagename ) );
+
+			if ( $pagetarget !== null ) {
+				array_push( $list_pages, $pagetarget->getPrefixedText() );
+			}
+		}
+
+		if ( $overwrite == 0 ) {
+			if (  $this->checkExistPages( $list_pages ) ) {
+				echo "Samples already exist. Contact webmaster.";
+				exit;
+			}	
 		}
 
 		// Normalize form and target names
@@ -232,12 +334,15 @@ class SFMultieditAPI extends ApiBase {
 			$this->mOptions['form'] = $form->getPrefixedText();
 		}
 
-		$target = Title::newFromText( $this->mOptions['target'] );
-		if ( $target !== null ) {
-			$this->mOptions['target'] = $target->getPrefixedText();
-		}
+		$$this->mOptions['listpages'] = $list_pages; // We store list pages as multiple page targets
 
-		wfRunHooks( 'sfSetTargetName', array( &$this->mOptions['target'], $hookQuery ) );
+		//$target = Title::newFromText( $this->mOptions['target'] );
+		//if ( $target !== null ) {
+		//	$this->mOptions['target'] = $target->getPrefixedText();
+		//}
+
+		// Let's disable hook here, because can break
+		// wfRunHooks( 'sfSetTargetName', array( &$this->mOptions['target'], $hookQuery ) );
 
 		// set html return status. If all goes well, this will not be changed
 		$this->mStatus = 200;

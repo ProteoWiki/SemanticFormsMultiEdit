@@ -31,6 +31,8 @@ $GLOBALS['wgMessagesDirs']['SemanticFormsMultiEdit'] = __DIR__ . '/i18n';
 $GLOBALS['wgExtensionMessagesFiles']['SemanticFormsMultiEdit'] = __DIR__ . '/languages/SFME_Messages.php';
 $GLOBALS['wgExtensionMessagesFiles']['SemanticFormsMultiEditMagic'] = __DIR__ . '/languages/SFME_Magic.php';
 
+$GLOBALS['wgSFMEMaxPages'] = 100;
+
 
 // register client-side modules
 if ( defined( 'MW_SUPPORTS_RESOURCE_MODULES' ) ) {
