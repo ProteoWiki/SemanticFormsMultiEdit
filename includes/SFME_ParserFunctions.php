@@ -21,7 +21,7 @@ class SFMEParserFunctions {
 	static function registerFunctions( &$parser ) {
 		global $wgOut;
 
-		$parser->setFunctionHook( 'multiedit', array( 'SFMEParserFunctions', 'rendermultiedit' ) );
+		$parser->setFunctionHook( 'multiedit', array( 'SFMEParserFunctions', 'renderMultiEdit' ) );
 
 		return true;
 	}
