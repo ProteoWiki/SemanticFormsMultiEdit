@@ -8,5 +8,5 @@ $magicWords = array();
 
 /** English (English) */
 $magicWords['en'] = array(
-	'multiedit' => array( 0, 'autoedit' ),
+	'multiedit' => array( 0, 'multiedit' ),
 );
