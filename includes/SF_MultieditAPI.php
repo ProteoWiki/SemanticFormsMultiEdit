@@ -213,6 +213,18 @@ class SFMultieditAPI extends ApiBase {
 			$this->mOptions['target'] = '';
 		}
 
+		// ensure 'someone to mail' exists
+		if ( array_key_exists( 'mail', $this->mOptions ) ) {
+			
+			$origin = "";
+			if ( array_key_exists( 'origin', $this->mOptions ) ) {
+				
+				$origin = $this->mOptions['origin'];
+			}
+			
+			$this->mailList($this->mOptions['mail'], $list_pages, $origin);
+		}
+
 		// Normalize form and target names
 
 		$form = Title::newFromText( $this->mOptions['form'] );
@@ -229,6 +241,61 @@ class SFMultieditAPI extends ApiBase {
 
 		// set html return status. If all goes well, this will not be changed
 		$this->mStatus = 200;
+	}
+
+	/**
+	 * Send email.
+	 *
+	 * @param Array $list_pages
+	 * @return boolean
+	 * @throws MWException
+	 */
+	private function checkExistPages ( $list_pages ) {
+
+		foreach ( $list_pages as $page ) {
+			if ( Title::newFromText( $page ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Send email.
+	 *
+	 * @return true
+	 * @throws MWException
+	 */
+	private function mailList( $username, $list_pages, $origin ) {
+
+	}
+
+
+	/**
+	 * Round digits.
+	 *
+	 * @param $number
+	 * @param $digits
+	 * @return rounded num in text format
+	 * @throws MWException
+	 */
+	private function digitsround ( $number, $digits ) {
+
+		$numdig = strlen($number);
+		$iter = $digits - $numdig;
+		
+		$repeat = "";
+
+		if ($iter > 0) {
+			$inum = 0;
+			while ($inum < $iter) {
+				$repeat = "0".$repeat;
+				$inum++;
+			}		
+		}
+
+		return($repeat.$number);
 	}
 
 	/**

@@ -36,6 +36,14 @@ class SFMEParserFunctions {
 		$inQueryArr = array();
 		$editTime = null;
 
+		// multiedit values
+		//$start = 0;
+		//$end = 0;
+		//$digits = 2;
+		//$overwrite = 0;
+		//$origin = "";
+		//$checkbase = "";
+
 		// parse parameters
 		$params = func_get_args();
 		array_shift( $params ); // don't need the parser
@@ -46,6 +54,8 @@ class SFMEParserFunctions {
 
 			$key = trim( $elements[ 0 ] );
 			$value = ( count( $elements ) > 1 ) ? trim( $elements[ 1 ] ) : '';
+
+			/** {{#multiedit:target=Sample:{{#time:ymd|{{Request-Creation_date|{{FULLPAGENAME}}}}}}_S_{{Request-User_code|{{FULLPAGENAME}}}}_|form=Sample|query string=Sample[Batch name]={{{BatchName|}}}&Sample[Request Reference]={{FULLPAGENAME}}&Sample[Creation date]={{CURRENTMONTHABBREV}} {{CURRENTDAY2}} {{CURRENTYEAR}} {{CURRENTTIME}}:{{CURRENTSECOND}}|start={{#var:begin}}|end={{ #expr: {{#var:diffsamples}} + {{#var:begin}} - 1}}|digits=2|overwrite=0|link text='''Add samples'''|ok text=Samples created|reload|mail={{{User_Name|}}}|checkbase=\d{6}_S_\D{4}|origin={{FULLPAGENAME}}}}}}|All samples are created}} **/
 
 			switch ( $key ) {
 				case 'link text':
@@ -91,6 +101,26 @@ class SFMEParserFunctions {
 						$targetArticle->clear();
 						$editTime = $targetArticle->getTimestamp();
 					}
+
+				// Adding new for multiedit
+				//case 'start':
+				//	$start = $parser->recursiveTagParse( $value );
+				//	break;
+				//case 'end':
+				//	$end = $parser->recursiveTagParse( $value );
+				//	break;
+				//case 'digits':
+				//	$digits = $parser->recursiveTagParse( $value );
+				//	break;
+				//case 'overwrite':
+				//	$overwrite = $parser->recursiveTagParse( $value );
+				//	break;
+				//case 'origin':
+				//	$origin = $parser->recursiveTagParse( $value );
+				//	break;
+				//case 'checkbase':
+				//	$checkbase = $parser->recursiveTagParse( $value );
+				//	break;
 
 				default :
 
