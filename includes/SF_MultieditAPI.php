@@ -949,160 +949,164 @@ class SFMultieditAPI extends ApiBase {
 		$formArticleId = $formTitle->getArticleID();
 
 		// the name of the target page; might be empty when using the one-step-process
-		$targetName = $this->mOptions['target'];
 
-		// if the target page was not specified, try finding the page name formula
-		// (Why is this not done in SFFormPrinter::formHTML?)
-		if ( $targetName === '' ) {
+		$targetNames = $this->mOptions['listpages'];
+		foreach ( $targetNames as $targetName ) {
 
-			// Parse the form to see if it has a 'page name' value set.
-			if ( preg_match( '/{{{\s*info.*page name\s*=\s*(.*)}}}/msU', $formContent, $matches ) ) {
-				$pageNameElements = SFUtils::getFormTagComponents( trim( $matches[1] ) );
-				$targetNameFormula = $pageNameElements[0];
+			// if the target page was not specified, try finding the page name formula
+			// (Why is this not done in SFFormPrinter::formHTML?)
+			if ( $targetName === '' ) {
+	
+				// Parse the form to see if it has a 'page name' value set.
+				if ( preg_match( '/{{{\s*info.*page name\s*=\s*(.*)}}}/msU', $formContent, $matches ) ) {
+					$pageNameElements = SFUtils::getFormTagComponents( trim( $matches[1] ) );
+					$targetNameFormula = $pageNameElements[0];
+				} else {
+					throw new MWException( wfMessage( 'sf_multiedit_notargetspecified' )->parse() );
+				}
+	
+				$targetTitle = null;
 			} else {
-				throw new MWException( wfMessage( 'sf_multiedit_notargetspecified' )->parse() );
+				$targetNameFormula = null;
+				$targetTitle = Title::newFromText( $targetName );
 			}
-
-			$targetTitle = null;
-		} else {
-			$targetNameFormula = null;
-			$targetTitle = Title::newFromText( $targetName );
-		}
-
-		$preloadContent = '';
-
-		// save $wgRequest for later restoration
-		$oldRequest = $wgRequest;
-		$pageExists = false;
-
-		// preload data if not explicitly excluded and if the preload page exists
-		if ( !isset( $this->mOptions['preload'] ) || $this->mOptions['preload'] !== false ) {
-
-			if ( isset( $this->mOptions['preload'] ) && is_string( $this->mOptions['preload'] ) ) {
-				$preloadTitle = Title::newFromText( $this->mOptions['preload'] );
-			} else {
-				$preloadTitle = Title::newFromText( $targetName );
-			}
-
-			if ( $preloadTitle !== null && $preloadTitle->exists() ) {
-
-				// the content of the page that was specified to be used for preloading
-				$preloadContent = WikiPage::factory( $preloadTitle )->getRawText();
-
-				$pageExists = true;
-
-			} else {
-				if ( isset( $this->mOptions['preload'] ) ) {
-					$this->logMessage( wfMessage( 'sf_multiedit_invalidpreloadspecified', $this->mOptions['preload'] )->parse(), self::WARNING );
+	
+			$preloadContent = '';
+	
+			// save $wgRequest for later restoration
+			$oldRequest = $wgRequest;
+			$pageExists = false;
+	
+			// preload data if not explicitly excluded and if the preload page exists
+			if ( !isset( $this->mOptions['preload'] ) || $this->mOptions['preload'] !== false ) {
+	
+				if ( isset( $this->mOptions['preload'] ) && is_string( $this->mOptions['preload'] ) ) {
+					$preloadTitle = Title::newFromText( $this->mOptions['preload'] );
+				} else {
+					$preloadTitle = Title::newFromText( $targetName );
+				}
+	
+				if ( $preloadTitle !== null && $preloadTitle->exists() ) {
+	
+					// the content of the page that was specified to be used for preloading
+					$preloadContent = WikiPage::factory( $preloadTitle )->getRawText();
+	
+					$pageExists = true;
+	
+				} else {
+					if ( isset( $this->mOptions['preload'] ) ) {
+						$this->logMessage( wfMessage( 'sf_multiedit_invalidpreloadspecified', $this->mOptions['preload'] )->parse(), self::WARNING );
+					}
 				}
 			}
-		}
-
-		// Allow extensions to set/change the preload text, for new
-		// pages.
-		if ( !$pageExists ) {
-			wfRunHooks( 'sfEditFormPreloadText', array( &$preloadContent, $targetTitle, $formTitle ) );
-		}
-
-		// Flag to keep track of formHTML() runs.
-		$formHtmlHasRun = false;
-
-		if ( $preloadContent !== '' ) {
-
-			// @HACK - we need to set this for the preload to take
-			// effect in the form.
-			$pageExists = true;
-
+	
+			// Allow extensions to set/change the preload text, for new
+			// pages.
+			if ( !$pageExists ) {
+				wfRunHooks( 'sfEditFormPreloadText', array( &$preloadContent, $targetTitle, $formTitle ) );
+			}
+	
+			// Flag to keep track of formHTML() runs.
+			$formHtmlHasRun = false;
+	
+			if ( $preloadContent !== '' ) {
+	
+				// @HACK - we need to set this for the preload to take
+				// effect in the form.
+				$pageExists = true;
+	
+				// Spoof $wgRequest for SFFormPrinter::formHTML().
+				if ( isset( $_SESSION ) ) {
+					$wgRequest = new FauxRequest( $this->mOptions, true, $_SESSION );
+				} else {
+					$wgRequest = new FauxRequest( $this->mOptions, true );
+				}
+				// Call SFFormPrinter::formHTML() to get at the form
+				// HTML of the existing page.
+				list ( $formHTML, $formJS, $targetContent, $form_page_title, $generatedTargetNameFormula ) =
+					$sfgFormPrinter->formHTML(
+						$formContent, $isFormSubmitted, $pageExists, $formArticleId, $preloadContent, $targetName, $targetNameFormula
+					);
+	
+				// Parse the data to be preloaded from the form HTML of
+				// the existing page.
+				$data = $this->parseDataFromHTMLFrag( $formHTML );
+	
+				// ...and merge/overwrite it with the new data.
+				$this->mOptions = SFUtils::array_merge_recursive_distinct( $data, $this->mOptions );
+			}
+	
+			// We already preloaded stuff for saving/previewing -
+			// do not do this again.
+			if ( $isFormSubmitted && !$wgRequest->getCheck( 'partial' ) ) {
+				$preloadContent = '';
+				$pageExists = false;
+			} else {
+				// Source of the data is a page.
+				$pageExists = ( is_a( $targetTitle, 'Title') && $targetTitle->exists() );
+			}
+	
 			// Spoof $wgRequest for SFFormPrinter::formHTML().
 			if ( isset( $_SESSION ) ) {
 				$wgRequest = new FauxRequest( $this->mOptions, true, $_SESSION );
 			} else {
 				$wgRequest = new FauxRequest( $this->mOptions, true );
 			}
-			// Call SFFormPrinter::formHTML() to get at the form
-			// HTML of the existing page.
-			list ( $formHTML, $formJS, $targetContent, $form_page_title, $generatedTargetNameFormula ) =
-				$sfgFormPrinter->formHTML(
-					$formContent, $isFormSubmitted, $pageExists, $formArticleId, $preloadContent, $targetName, $targetNameFormula
-				);
-
-			// Parse the data to be preloaded from the form HTML of
-			// the existing page.
-			$data = $this->parseDataFromHTMLFrag( $formHTML );
-
-			// ...and merge/overwrite it with the new data.
-			$this->mOptions = SFUtils::array_merge_recursive_distinct( $data, $this->mOptions );
-		}
-
-		// We already preloaded stuff for saving/previewing -
-		// do not do this again.
-		if ( $isFormSubmitted && !$wgRequest->getCheck( 'partial' ) ) {
-			$preloadContent = '';
-			$pageExists = false;
-		} else {
-			// Source of the data is a page.
-			$pageExists = ( is_a( $targetTitle, 'Title') && $targetTitle->exists() );
-		}
-
-		// Spoof $wgRequest for SFFormPrinter::formHTML().
-		if ( isset( $_SESSION ) ) {
-			$wgRequest = new FauxRequest( $this->mOptions, true, $_SESSION );
-		} else {
-			$wgRequest = new FauxRequest( $this->mOptions, true );
-		}
-
-		// get wikitext for submitted data and form
-		list ( $formHTML, $formJS, $targetContent, $generatedFormName, $generatedTargetNameFormula ) =
-				$sfgFormPrinter->formHTML( $formContent, $isFormSubmitted, $pageExists, $formArticleId, $preloadContent, $targetName, $targetNameFormula );
-
-		// Restore original request.
-		$wgRequest = $oldRequest;
-
-		if ( $generatedFormName !== '' ) {
-			$formTitle = Title::newFromText( $generatedFormName );
-			$this->mOptions['formtitle'] = $formTitle->getText();
-		}
-
-		$this->mOptions['formHTML'] = $formHTML;
-		$this->mOptions['formJS'] = $formJS;
-
-		if ( $isFormSubmitted ) {
-
-			// If the target page was not specified, see if
-			// something was generated from the target name formula.
-			if ( $this->mOptions['target'] === '' ) {
-
-				// If no name was generated, we cannot save => give up
-				if ( $generatedTargetNameFormula === '' ) {
-					throw new MWException( wfMessage( 'sf_multiedit_notargetspecified' )->parse() );
+	
+			// get wikitext for submitted data and form
+			list ( $formHTML, $formJS, $targetContent, $generatedFormName, $generatedTargetNameFormula ) =
+					$sfgFormPrinter->formHTML( $formContent, $isFormSubmitted, $pageExists, $formArticleId, $preloadContent, $targetName, $targetNameFormula );
+	
+			// Restore original request.
+			$wgRequest = $oldRequest;
+	
+			if ( $generatedFormName !== '' ) {
+				$formTitle = Title::newFromText( $generatedFormName );
+				$this->mOptions['formtitle'] = $formTitle->getText();
+			}
+	
+			$this->mOptions['formHTML'] = $formHTML;
+			$this->mOptions['formJS'] = $formJS;
+	
+			if ( $isFormSubmitted ) {
+	
+				// If the target page was not specified, see if
+				// something was generated from the target name formula.
+				if ( $this->mOptions['target'] === '' ) {
+	
+					// If no name was generated, we cannot save => give up
+					if ( $generatedTargetNameFormula === '' ) {
+						throw new MWException( wfMessage( 'sf_multiedit_notargetspecified' )->parse() );
+					}
+	
+					$this->mOptions['target'] = $this->generateTargetName( $generatedTargetNameFormula );
 				}
-
-				$this->mOptions['target'] = $this->generateTargetName( $generatedTargetNameFormula );
+	
+				// Lets other code process additional form-definition syntax
+				wfRunHooks( 'sfWritePageData', array( $this->mOptions['form'], Title::newFromText( $this->mOptions['target'] ), &$targetContent ) );
+	
+				$editor = $this->setupEditPage( $targetContent );
+	
+				// Perform the requested action.
+				if ( $this->mAction === self::ACTION_PREVIEW ) {
+					$this->doPreview( $editor );
+				} else if ( $this->mAction === self::ACTION_DIFF ) {
+					$this->doDiff( $editor );
+				} else {
+					$this->doStore( $editor );
+				}
+			} else if ( $this->mAction === self::ACTION_FORMEDIT ) {
+	
+				$parserOutput = $wgParser->getOutput();
+				if( method_exists( $wgOut, 'addParserOutputMetadata' ) ){
+					$wgOut->addParserOutputMetadata( $parserOutput );
+				} else {
+					$wgOut->addParserOutputNoText( $parserOutput );
+				}
+	
+				$this->doFormEdit( $formHTML, $formJS );
 			}
 
-			// Lets other code process additional form-definition syntax
-			wfRunHooks( 'sfWritePageData', array( $this->mOptions['form'], Title::newFromText( $this->mOptions['target'] ), &$targetContent ) );
-
-			$editor = $this->setupEditPage( $targetContent );
-
-			// Perform the requested action.
-			if ( $this->mAction === self::ACTION_PREVIEW ) {
-				$this->doPreview( $editor );
-			} else if ( $this->mAction === self::ACTION_DIFF ) {
-				$this->doDiff( $editor );
-			} else {
-				$this->doStore( $editor );
-			}
-		} else if ( $this->mAction === self::ACTION_FORMEDIT ) {
-
-			$parserOutput = $wgParser->getOutput();
-			if( method_exists( $wgOut, 'addParserOutputMetadata' ) ){
-				$wgOut->addParserOutputMetadata( $parserOutput );
-			} else {
-				$wgOut->addParserOutputNoText( $parserOutput );
-			}
-
-			$this->doFormEdit( $formHTML, $formJS );
 		}
 	}
 
