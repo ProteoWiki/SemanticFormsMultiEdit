@@ -360,7 +360,8 @@ class SFMultieditAPI extends ApiBase {
 	private function checkExistPages ( $list_pages ) {
 
 		foreach ( $list_pages as $page ) {
-			if ( Title::newFromText( $page ) ) {
+			$titlePage = Title::newFromText( $page );
+			if ( $titlePage && $titlePage->exists() ) {
 				return true;
 			}
 		}
