@@ -146,7 +146,22 @@ class SFMultieditAPI extends ApiBase {
 			Parser::OT_WIKI
 		);
 
+		// MW uses the parameter 'title' instead of 'target' when submitting
+		// data for formedit action => use that
+		if ( !array_key_exists( 'target', $this->mOptions ) && array_key_exists( 'title', $this->mOptions ) ) {
 
+			$this->mOptions['target'] = $this->mOptions['title'];
+			unset( $this->mOptions['title'] );
+		}
+
+		// if the 'query' parameter was used, unpack the param string
+		if ( array_key_exists( 'query', $this->mOptions ) ) {
+
+			$this->addOptionsFromString( $this->mOptions['query'] );
+			unset( $this->mOptions['query'] );
+		}
+
+		// Specific params 
 		$overwrite = 1; // Overwrites by default
 
 		// if overwrite
@@ -205,21 +220,6 @@ class SFMultieditAPI extends ApiBase {
 		if ( array_key_exists( 'checkabse', $this->mOptions ) ) {
 			$checkbase = $this->mOptions['checkbase'];
 			unset( $this->mOptions['checkbase'] );
-		}
-
-		// MW uses the parameter 'title' instead of 'target' when submitting
-		// data for formedit action => use that
-		if ( !array_key_exists( 'target', $this->mOptions ) && array_key_exists( 'title', $this->mOptions ) ) {
-
-			$this->mOptions['target'] = $this->mOptions['title'];
-			unset( $this->mOptions['title'] );
-		}
-
-		// if the 'query' parameter was used, unpack the param string
-		if ( array_key_exists( 'query', $this->mOptions ) ) {
-
-			$this->addOptionsFromString( $this->mOptions['query'] );
-			unset( $this->mOptions['query'] );
 		}
 
 		// if an action is explicitly set in the form data, use that
