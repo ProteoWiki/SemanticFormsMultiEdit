@@ -4,5 +4,21 @@
                         "Toni Hermoso"
                 ]
         },
-	"semanticforms-multiedit-desc": "Allow multiple Semantic Forms edition"
+	"semanticforms-multiedit-desc": "Allow multiple Semantic Forms edition",
+	"sf_multiedit_anoneditwarning": "Warning: You are not logged in. Your IP address will be recorded in this page's edit history.",
+	"sf_multiedit_success": "Successfully modified [[$1]] using form $2.",
+	"sf_multiedit_fail": "Modifying [[$1]] failed.",
+	"sf_multiedit_notargetspecified": "No target page specified.",
+	"sf_multiedit_invalidtargetspecified": "The specified target page '''$1''' is invalid.",
+	"sf_multiedit_invalidform": "'''$1''' is not a valid form.",
+	"sf_multiedit_redirectlimitexeeded": "The maximum redirect limit for form $1 was exceeded.",
+	"sf_multiedit_invalidredirecttarget": "$1 is an invalid redirect target for form $2.",
+	"sf_multiedit_invalidpreloadspecified": "The specified preload page $1 is invalid.",
+	"sf_multiedit_redlinkexists": "$1 already exists.",
+	"sf_multiedit_noformfound": "No form specified.",
+	"sf_multiedit_toomanyformsfound": "More than one form available for page.",
+	"sf_multiedit_readonly": "The database is currently locked to modifications. Reason: $1",
+	"sf_multiedit_nosemanticform": "Could not get form $2 for page $1. See [[{{#special:FormEdit}}/$2/$1]] for details.",
+	"sf_multiedit_summary": "Edited multimatically from page $1.",
+	"sf-multiedit-wait": "Wait..."
 }
