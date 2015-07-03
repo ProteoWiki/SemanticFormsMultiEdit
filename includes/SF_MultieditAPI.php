@@ -334,7 +334,7 @@ class SFMultieditAPI extends ApiBase {
 			$this->mOptions['form'] = $form->getPrefixedText();
 		}
 
-		$$this->mOptions['listpages'] = $list_pages; // We store list pages as multiple page targets
+		$this->mOptions['listpages'] = $list_pages; // We store list pages as multiple page targets
 
 		//$target = Title::newFromText( $this->mOptions['target'] );
 		//if ( $target !== null ) {
