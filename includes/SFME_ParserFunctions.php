@@ -36,14 +36,6 @@ class SFMEParserFunctions {
 		$inQueryArr = array();
 		$editTime = null;
 
-		// multiedit values
-		//$start = 0;
-		//$end = 0;
-		//$digits = 2;
-		//$overwrite = 0;
-		//$origin = "";
-		//$checkbase = "";
-
 		// parse parameters
 		$params = func_get_args();
 		array_shift( $params ); // don't need the parser
@@ -101,26 +93,6 @@ class SFMEParserFunctions {
 						$targetArticle->clear();
 						$editTime = $targetArticle->getTimestamp();
 					}
-
-				// Adding new for multiedit
-				//case 'start':
-				//	$start = $parser->recursiveTagParse( $value );
-				//	break;
-				//case 'end':
-				//	$end = $parser->recursiveTagParse( $value );
-				//	break;
-				//case 'digits':
-				//	$digits = $parser->recursiveTagParse( $value );
-				//	break;
-				//case 'overwrite':
-				//	$overwrite = $parser->recursiveTagParse( $value );
-				//	break;
-				//case 'origin':
-				//	$origin = $parser->recursiveTagParse( $value );
-				//	break;
-				//case 'checkbase':
-				//	$checkbase = $parser->recursiveTagParse( $value );
-				//	break;
 
 				default :
 

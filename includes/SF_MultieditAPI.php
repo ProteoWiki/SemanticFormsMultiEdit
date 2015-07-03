@@ -665,11 +665,12 @@ class SFMultieditAPI extends ApiBase {
 
 			case EditPage::AS_SUCCESS_NEW_ARTICLE: // Article successfully created
 
-				$query = $resultDetails['redirect'] ? 'redirect=no' : '';
-				$anchor = isset( $resultDetails['sectionanchor'] ) ? $resultDetails['sectionanchor'] : '';
-
-				$this->getOutput()->redirect( $title->getFullURL( $query ) . $anchor );
-				$this->getResult()->addValue( NULL, 'redirect', $title->getFullURL( $query ) . $anchor );
+				// Omit redirect stuff here
+				//$query = $resultDetails['redirect'] ? 'redirect=no' : '';
+				//$anchor = isset( $resultDetails['sectionanchor'] ) ? $resultDetails['sectionanchor'] : '';
+				//
+				//$this->getOutput()->redirect( $title->getFullURL( $query ) . $anchor );
+				//$this->getResult()->addValue( NULL, 'redirect', $title->getFullURL( $query ) . $anchor );
 				return false; // success
 
 			case EditPage::AS_SUCCESS_UPDATE: // Article successfully updated
@@ -680,16 +681,16 @@ class SFMultieditAPI extends ApiBase {
 				// Give extensions a chance to modify URL query on update
 				wfRunHooks( 'ArticleUpdateBeforeRedirect', array( $editor->getArticle(), &$sectionanchor, &$extraQuery ) );
 
-				if ( $resultDetails['redirect'] ) {
-					if ( $extraQuery == '' ) {
-						$extraQuery = 'redirect=no';
-					} else {
-						$extraQuery = 'redirect=no&' . $extraQuery;
-					}
-				}
-
-				$this->getOutput()->redirect( $title->getFullURL( $extraQuery ) . $sectionanchor );
-				$this->getResult()->addValue( NULL, 'redirect', $title->getFullURL( $extraQuery ) . $sectionanchor );
+				//if ( $resultDetails['redirect'] ) {
+				//	if ( $extraQuery == '' ) {
+				//		$extraQuery = 'redirect=no';
+				//	} else {
+				//		$extraQuery = 'redirect=no&' . $extraQuery;
+				//	}
+				//}
+				//
+				//$this->getOutput()->redirect( $title->getFullURL( $extraQuery ) . $sectionanchor );
+				//$this->getResult()->addValue( NULL, 'redirect', $title->getFullURL( $extraQuery ) . $sectionanchor );
 
 				return false; // success
 
@@ -697,8 +698,8 @@ class SFMultieditAPI extends ApiBase {
 
 				$this->logMessage( 'User tried to create a blank page', self::DEBUG );
 
-				$this->getOutput()->redirect( $editor->getContextTitle()->getFullURL() );
-				$this->getResult()->addValue( NULL, 'redirect', $editor->getContextTitle()->getFullURL() );
+				//$this->getOutput()->redirect( $editor->getContextTitle()->getFullURL() );
+				//$this->getResult()->addValue( NULL, 'redirect', $editor->getContextTitle()->getFullURL() );
 
 				return false; // success
 
