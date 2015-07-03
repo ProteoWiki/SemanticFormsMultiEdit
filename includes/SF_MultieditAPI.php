@@ -175,7 +175,7 @@ class SFMultieditAPI extends ApiBase {
 		}
 
 		if ( array_key_exists( 'digits', $this->mOptions ) ) {
-			$end = $this->mOptions['digits'];
+			$digits = $this->mOptions['digits'];
 			unset( $this->mOptions['digits'] );
 		}
 		
@@ -318,6 +318,8 @@ class SFMultieditAPI extends ApiBase {
 			if ( $pagetarget !== null ) {
 				array_push( $list_pages, $pagetarget->getPrefixedText() );
 			}
+
+			$iter++;
 		}
 
 		if ( $overwrite == 0 ) {
@@ -409,7 +411,7 @@ class SFMultieditAPI extends ApiBase {
 	 * @return Title
 	 * @throws MWException
 	 */
-	protected function getFormTitle() {
+	protected function getFormTitle( $iter ) {
 
 		// if no form was explicitly specified, try for explicitly set alternate forms
 		if ( $this->mOptions['form'] === '' ) {
@@ -429,15 +431,15 @@ class SFMultieditAPI extends ApiBase {
 			if ( count( $formNames ) === 0 ) {
 
 				// if no form and and no alt forms and no target page was specified, give up
-				if ( $this->mOptions['target'] === '' ) {
+				if ( $this->mOptions['listpages'][$iter] === '' ) {
 					throw new MWException( wfMessage( 'sf_multiedit_notargetspecified' )->parse() );
 				}
 
-				$targetTitle = Title::newFromText( $this->mOptions['target'] );
+				$targetTitle = Title::newFromText( $this->mOptions['listpages'][$iter] );
 
 				// if the specified target title is invalid, give up
 				if ( !$targetTitle instanceof Title ) {
-					throw new MWException( wfMessage( 'sf_multiedit_invalidtargetspecified', $this->mOptions['target'] )->parse() );
+					throw new MWException( wfMessage( 'sf_multiedit_invalidtargetspecified', $this->mOptions['listpages'][$iter] )->parse() );
 				}
 
 				$formNames = SFFormLinker::getDefaultFormsForPage( $targetTitle );
@@ -504,14 +506,14 @@ class SFMultieditAPI extends ApiBase {
 		return $formTitle;
 	}
 
-	protected function setupEditPage( $targetContent ) {
+	protected function setupEditPage( $targetContent, $iter ) {
 
 		// Find existing target article if it exists, or create a new one.
-		$targetTitle = Title::newFromText( $this->mOptions['target'] );
+		$targetTitle = Title::newFromText( $this->mOptions['listpages'][$iter] );
 
 		// if the specified target title is invalid, give up
 		if ( !$targetTitle instanceof Title ) {
-			throw new MWException( wfMessage( 'sf_multiedit_invalidtargetspecified', $this->mOptions['target'] )->parse() );
+			throw new MWException( wfMessage( 'sf_multiedit_invalidtargetspecified', $this->mOptions['listpages'][$iter] )->parse() );
 		}
 
 		$article = new Article( $targetTitle );
@@ -596,7 +598,7 @@ class SFMultieditAPI extends ApiBase {
 		$this->setResultFromOutput();
 	}
 
-	protected function doStore( EditPage $editor ) {
+	protected function doStore( EditPage $editor, $iter ) {
 
 		$title = $editor->getTitle();
 
@@ -645,7 +647,7 @@ class SFMultieditAPI extends ApiBase {
 			case EditPage::AS_MAX_ARTICLE_SIZE_EXCEEDED: // article is too big (> $wgMaxArticleSize), after merging in the new section
 			case EditPage::AS_END: // WikiPage::doEdit() was unsuccessfull
 
-				throw new MWException( wfMessage( 'sf_multiedit_fail', $this->mOptions['target'] )->parse() );
+				throw new MWException( wfMessage( 'sf_multiedit_fail', $this->mOptions['listpages'][$iter] )->parse() );
 
 			case EditPage::AS_HOOK_ERROR: // Article update aborted by a hook function
 
@@ -930,28 +932,32 @@ class SFMultieditAPI extends ApiBase {
 			$this->logMessage( wfMessage( 'sf_multiedit_readonly', wfReadOnlyReason() )->parse(), self::NOTICE );
 		}
 
-		// find the title of the form to be used
-		$formTitle = $this->getFormTitle();
-
-		// get the form content
-		$formContent = StringUtils::delimiterReplace(
-						'<noinclude>', // start delimiter
-						'</noinclude>', // end delimiter
-						'', // replace by
-						WikiPage::factory( $formTitle )->getRawText() // subject
-		);
-
-		// signals that the form was submitted
-		// always true, else we would not be here
-		$isFormSubmitted = $this->mAction === self::ACTION_SAVE || $this->mAction === self::ACTION_PREVIEW || $this->mAction === self::ACTION_DIFF;
-
-		// the article id of the form to be used
-		$formArticleId = $formTitle->getArticleID();
-
 		// the name of the target page; might be empty when using the one-step-process
 
 		$targetNames = $this->mOptions['listpages'];
+		// Iteration step
+		$iter = 0;
+
 		foreach ( $targetNames as $targetName ) {
+
+			// find the title of the form to be used
+			$formTitle = $this->getFormTitle( $iter );
+	
+			// get the form content
+			$formContent = StringUtils::delimiterReplace(
+							'<noinclude>', // start delimiter
+							'</noinclude>', // end delimiter
+							'', // replace by
+							WikiPage::factory( $formTitle )->getRawText() // subject
+			);
+	
+			// signals that the form was submitted
+			// always true, else we would not be here
+			$isFormSubmitted = $this->mAction === self::ACTION_SAVE || $this->mAction === self::ACTION_PREVIEW || $this->mAction === self::ACTION_DIFF;
+	
+			// the article id of the form to be used
+			$formArticleId = $formTitle->getArticleID();
+
 
 			// if the target page was not specified, try finding the page name formula
 			// (Why is this not done in SFFormPrinter::formHTML?)
@@ -1072,20 +1078,20 @@ class SFMultieditAPI extends ApiBase {
 	
 				// If the target page was not specified, see if
 				// something was generated from the target name formula.
-				if ( $this->mOptions['target'] === '' ) {
+				if ( $this->mOptions['listpages'][$iter] === '' ) {
 	
 					// If no name was generated, we cannot save => give up
 					if ( $generatedTargetNameFormula === '' ) {
 						throw new MWException( wfMessage( 'sf_multiedit_notargetspecified' )->parse() );
 					}
 	
-					$this->mOptions['target'] = $this->generateTargetName( $generatedTargetNameFormula );
+					$this->mOptions['listpages'][$iter] = $this->generateTargetName( $generatedTargetNameFormula );
 				}
 	
 				// Lets other code process additional form-definition syntax
-				wfRunHooks( 'sfWritePageData', array( $this->mOptions['form'], Title::newFromText( $this->mOptions['target'] ), &$targetContent ) );
+				wfRunHooks( 'sfWritePageData', array( $this->mOptions['form'], Title::newFromText( $this->mOptions['listpages'][$iter] ), &$targetContent ) );
 	
-				$editor = $this->setupEditPage( $targetContent );
+				$editor = $this->setupEditPage( $targetContent, $iter );
 	
 				// Perform the requested action.
 				if ( $this->mAction === self::ACTION_PREVIEW ) {
@@ -1093,7 +1099,7 @@ class SFMultieditAPI extends ApiBase {
 				} else if ( $this->mAction === self::ACTION_DIFF ) {
 					$this->doDiff( $editor );
 				} else {
-					$this->doStore( $editor );
+					$this->doStore( $editor, $iter );
 				}
 			} else if ( $this->mAction === self::ACTION_FORMEDIT ) {
 	
@@ -1107,6 +1113,7 @@ class SFMultieditAPI extends ApiBase {
 				$this->doFormEdit( $formHTML, $formJS );
 			}
 
+			$iter++;
 		}
 	}
 
