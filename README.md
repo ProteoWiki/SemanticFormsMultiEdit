@@ -2,6 +2,7 @@
 Add multiedit parser function to Semantic Forms
 
 // Max number of pages than can be created at once
+
     $GLOBALS['wgSFMEMaxPages'] = 100;
 
 ## Example Syntax
