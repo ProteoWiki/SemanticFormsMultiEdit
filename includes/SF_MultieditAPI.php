@@ -283,7 +283,18 @@ class SFMultieditAPI extends ApiBase {
 				$origin = $this->mOptions['origin'];
 			}
 			
-			$this->mailList( $this->mOptions['mail'], $list_pages, $origin );
+			$mailsubject = null;
+			$mailbody = null;
+
+			if ( array_key_exists( 'mailsubject', $this->mOptions ) ) {
+				$mailsubject = $this->mOptions['mailsubject'];
+			}
+
+			if ( array_key_exists( 'mailbody', $this->mOptions ) ) {
+				$mailbody = $this->mOptions['mailbody'];
+			}
+
+			$this->mailList( $this->mOptions['mail'], $list_pages, $origin, $mailsubject, $mailbody );
 		}
 
 		// We put base from target 
@@ -375,7 +386,56 @@ class SFMultieditAPI extends ApiBase {
 	 * @return true
 	 * @throws MWException
 	 */
-	private function mailList( $username, $list_pages, $origin ) {
+	private function mailList( $username, $list_pages, $origin, $mailsubject = null, $mailbody = null ) {
+		
+		global $wgSFMEDefaultEmail;
+		global $wgSFMEDefaultName;
+		global $wgSitename;
+		global $wgPasswordSender;
+		
+		$assigneeobj = User::newfromName( $username );
+
+		if ( $assigneeobj->getId() > 0 ) {
+
+			$to_address = new MailAddress( $assigneeobj->getEmail(), $assigneeobj->getName() );
+			
+			$subject = "";
+			$body = "";
+
+			if ( $mailsubject ) {
+				$replaces = array( $wgSitename, $origin, $assigneeobj );
+				$subject = $this->replaceMessage( $mailsubject, $replaces );
+			} else {
+				$subject = wfMessage('sf-multiedit_email-subject')->params( $wgSitename, $origin, $assigneeobj->getName() )->plain();
+			}
+
+			$fromName = $wgSitename;
+			$fromEmail = $wgPasswordSender;
+
+			if ( $wgSFMEDefaultEmail ) {
+				$fromEmail = $wgSFMEDefaultEmail;
+			}
+			if ( $wgSFMEDefaultName ) {
+				$fromName = $wgSFMEDefaultName;
+			}
+
+			$from_address = new MailAddress( $fromEmail, $fromName );
+			
+			$origin_url = Title::newFromText( $origin )->escapeFullURL();
+			
+			$list_samples = implode("\r\n", $list_pages);
+
+			if ( $mailbody ) {
+				$replaces = array( $assigneeobj->getName(), $origin, $origin_url, $list_samples );
+				$body = $this->replaceMessage( $mailbody, $replaces );
+			} else {
+				$body = wfMessage('sf-multiedit_email-body')->params( $assigneeobj->getName(), $origin, $origin_url, $list_samples );
+			}
+			
+			$user_mailer = new UserMailer();
+			$user_mailer->send( $to_address, $from_address, $subject, $body );
+
+		}
 
 	}
 
@@ -1237,6 +1297,23 @@ class SFMultieditAPI extends ApiBase {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Apply replacement to string from Array
+	 *
+	 * @param String $string
+	 * @param Array $data
+	 * @return String
+	 */
+	private function replaceMessage( $string, $replaces ) {
+
+		for ( $i = 1; $i < count( $replaces ) + 1; $i++ ) {
+			$replaceStr = "$".$i;
+			$string = str_replace( $replaceStr, $replaces[$i-1], $string );
+		}
+
+		return $string;
 	}
 
 	/**

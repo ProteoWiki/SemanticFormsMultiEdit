@@ -44,6 +44,9 @@ if ( defined( 'MW_SUPPORTS_RESOURCE_MODULES' ) ) {
 		'ext.semanticforms.multiedit' => $sfgResourceTemplate + array(
 			'scripts' => 'libs/SF_multiedit.js',
 			'styles' => 'skins/SF_multiedit.css',
+			'dependencies' => array(
+				'mediawiki.jqueryMsg',
+			),
 			'messages' => array(
 				'sf-multiedit-wait',
 				'sf_multiedit_anoneditwarning',

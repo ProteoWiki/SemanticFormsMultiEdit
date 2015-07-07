@@ -20,5 +20,7 @@
 	"sf_multiedit_readonly": "The database is currently locked to modifications. Reason: $1",
 	"sf_multiedit_nosemanticform": "Could not get form $2 for page $1. See [[{{#special:FormEdit}}/$2/$1]] for details.",
 	"sf_multiedit_summary": "Edited multimatically from page $1.",
-	"sf-multiedit-wait": "Wait..."
+	"sf-multiedit-wait": "Wait...",
+	"sf-multiedit_email-subject": "[$1] Information from $2 ([$3])",
+	"sf-multiedit_email-body": "Dear $1,\n\nFind below the list of pagenames for your $2 ($3).\n\n$4\n\n"
 }
