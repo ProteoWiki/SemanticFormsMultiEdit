@@ -1313,6 +1313,7 @@ class SFMultieditAPI extends ApiBase {
 			$string = str_replace( $replaceStr, $replaces[$i-1], $string );
 		}
 
+		$string = str_replace('\n', "\n", $string);
 		return $string;
 	}
 
