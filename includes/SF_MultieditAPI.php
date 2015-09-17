@@ -180,12 +180,7 @@ class SFMultieditAPI extends ApiBase {
 			unset( $this->mOptions['end'] );
 		}
 		if ( array_key_exists( 'start', $this->mOptions ) ) {
-			$end = $this->mOptions['start'];
-			unset( $this->mOptions['start'] );
-		}
-
-		if ( array_key_exists( 'start', $this->mOptions ) ) {
-			$end = $this->mOptions['start'];
+			$start = $this->mOptions['start'];
 			unset( $this->mOptions['start'] );
 		}
 
