@@ -269,29 +269,6 @@ class SFMultieditAPI extends ApiBase {
 			$this->mOptions['target'] = '';
 		}
 
-		// ensure 'someone to mail' exists
-		if ( array_key_exists( 'mail', $this->mOptions ) ) {
-			
-			$origin = "";
-			if ( array_key_exists( 'origin', $this->mOptions ) ) {
-				
-				$origin = $this->mOptions['origin'];
-			}
-			
-			$mailsubject = null;
-			$mailbody = null;
-
-			if ( array_key_exists( 'mailsubject', $this->mOptions ) ) {
-				$mailsubject = $this->mOptions['mailsubject'];
-			}
-
-			if ( array_key_exists( 'mailbody', $this->mOptions ) ) {
-				$mailbody = $this->mOptions['mailbody'];
-			}
-
-			$this->mailList( $this->mOptions['mail'], $list_pages, $origin, $mailsubject, $mailbody );
-		}
-
 		// We put base from target 
 		$base = $this->mOptions['target'];
 
@@ -343,6 +320,29 @@ class SFMultieditAPI extends ApiBase {
 		}
 
 		$this->mOptions['listpages'] = $list_pages; // We store list pages as multiple page targets
+
+		// ensure 'someone to mail' exists
+		if ( array_key_exists( 'mail', $this->mOptions ) ) {
+			
+			$origin = "";
+			if ( array_key_exists( 'origin', $this->mOptions ) ) {
+				
+				$origin = $this->mOptions['origin'];
+			}
+			
+			$mailsubject = null;
+			$mailbody = null;
+
+			if ( array_key_exists( 'mailsubject', $this->mOptions ) ) {
+				$mailsubject = $this->mOptions['mailsubject'];
+			}
+
+			if ( array_key_exists( 'mailbody', $this->mOptions ) ) {
+				$mailbody = $this->mOptions['mailbody'];
+			}
+
+			$this->mailList( $this->mOptions['mail'], $list_pages, $origin, $mailsubject, $mailbody );
+		}
 
 		//$target = Title::newFromText( $this->mOptions['target'] );
 		//if ( $target !== null ) {
